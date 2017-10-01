@@ -15,17 +15,15 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
+[image1]: ./report_imags/car_not_car.png
+[image2]: ./report_imags/HOG_example.jpg
+[image3]: ./report_imags/sliding_windows.png
+[image5]: ./report_imags/heat.png
+[image6]: ./report_imags/detect.png
+[video1]: ./project_video_output.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
 ###Writeup / README
@@ -38,7 +36,8 @@ You're reading it!
 
 ####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
+The code for this step is contained in the first code cell of the IPython notebook line 98-108 ( `CarND-Vehicle-Detection.ipynb`).  
+
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
@@ -54,16 +53,21 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 ####2. Explain how you settled on your final choice of HOG parameters.
 
 I tried various combinations of parameters and...
+spatial_size=(32, 32),hist_bins=32, orient=9, pix_per_cell=8, cell_per_block=2, hog_channel='ALL',colorspace = 'YUV'
+
+spatial_size=(32, 32),hist_bins=32, orient=11, pix_per_cell=16, cell_per_block=2, hog_channel='ALL',colorspace = 'YUV'
+
+and serveral other value, and later I still use the first option
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
+I trained a linear SVM using the combination feature of hog, spatial and hist against its car or not car label 
 
 ###Sliding Window Search
 
 ####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+I decided to search random window positions at  scales from 0.5-3.5  all over the image and came up with this  scales = [1,1.5,2,2.5,3,3.5], and also use    ystart = 400 ystop = 656 to avoid some false detection.
 
 ![alt text][image3]
 
@@ -85,16 +89,14 @@ Here's a [link to my video result](./project_video.mp4)
 I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
 Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
+heat = apply_threshold(heat,2)
 
 ### Here are six frames and their corresponding heatmaps:
 
 ![alt text][image5]
 
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
 ### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
+![alt text][image6]
 
 
 
@@ -104,5 +106,8 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+At the very beginnning, I got a lot of false detection, and my model go well with the download iamge, but when I try to apply them into real video/image, its accuracy is not so good. So I try to capture some sample from video frame as my training data as well, and I use some augument and balance technique to make the data balance and more robust.
+If you check the late part of my code, it include several methods to zoom, ckip/rotate/crop/blur/affine/transform 
+Choose the right y_start y_stop in different scale can also make the detection more accuracy.
 
+The detection is not stable, I should use a class to record overall detection and average them, so the detection won't disappar immediately when a single frame miss it, and when there is deviation/error, it can corret it.
